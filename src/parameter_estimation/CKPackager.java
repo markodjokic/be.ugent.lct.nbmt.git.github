@@ -49,7 +49,7 @@ public class CKPackager{
 			
 			//start a new thread that redirects to the run() method, which contains the sequential chemkin procedure (chem -> CKReactorPlugFlow -> GetSolution ->...)
 			dummy[i].start();
-			System.out.println("Thread "+i+" was started");
+			//System.out.println("Thread "+i+" was started");
 
 			//wait to start other threads before the first thread, creating the CKSolnList.txt is completely finished:
 			if (flagCKSolnList){

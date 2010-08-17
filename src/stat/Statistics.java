@@ -80,7 +80,7 @@ public void calc_corr(){
         }
 }
 public void calc_ANOVA() throws IOException, InterruptedException{
-	Function function = new Function (optimization.getModelValues(optimization.buildFullParamVector(optimization.retrieve_fitted_parameters()),true), optimization.getExp());
+	Function function = new Function (optimization.getModelValues(true), optimization.getExp());
 	SREG = function.getSREG();
 	SRES = function.getSRES();
 	F_value = (SREG/no_parameters) / (SRES/(no_experiments * no_responses - no_parameters));
@@ -89,8 +89,8 @@ public void calc_ANOVA() throws IOException, InterruptedException{
  * t-value for significance of individual parameter estimation with respect to zero
  */
 public void calc_t_values(){
-	//double [] params = optimization.getNBMTmultiDHost().getParms();
-	double [] params = optimization.getNBMTHost().getParms();
+
+	Double [] params = optimization.getNBMTHost().getParms();
 	
 	t_values = new double[params.length];
 	for (int i = 0; i < t_values.length; i++) {
@@ -105,7 +105,7 @@ public void calc_t_values(){
  */
 public void calc_confidence_intervals() throws IOException, InterruptedException{
 	//double [] params = optimization.getNBMTmultiDHost().getParms();
-	double [] params = optimization.getNBMTHost().getParms();
+	Double [] params = optimization.getNBMTHost().getParms();
 	confidence_intervals = new double[no_parameters][3];
 	
 	calc_tabulated_t();

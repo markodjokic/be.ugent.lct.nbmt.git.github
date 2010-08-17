@@ -2,9 +2,13 @@ package levenberg.mono;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import parameter_estimation.Function;
+import parameter_estimation.ModifiedArrheniusKinetics;
 import parameter_estimation.Optimization;
+import parameter_estimation.Tools;
 
 public class NBMTHost implements NBMThostI {
 
@@ -18,9 +22,9 @@ public class NBMTHost implements NBMThostI {
     //private double resid[][]; //residual matrix Y - Y^ with rows as experiments
     private double resid[]; //residual matrix Y - Y^ with rows as experiments
     private double jac[][];  //2D jacobian
-    private double parms[];  // starting point
+    private Double parms[];  // starting point
     
-    private Optimization optimization;
+    private Optimization optim;
     private Function function;
     private LM_NBMT myLM;
     
@@ -28,12 +32,12 @@ public class NBMTHost implements NBMThostI {
     
     public NBMTHost(Optimization o) throws IOException, InterruptedException
     {
-    	this.optimization = o;
-    	this.parms = optimization.retrieve_fitted_parameters();
+    	this.optim = o;
+    	this.parms = Tools.retrieveFittedParameters(optim.getCoefficients());
     	
     	NPARMS = parms.length;
-    	NPTS = (optimization.getExp()).size();
-    	NRESP = (optimization.getExp().get(0)).size();
+    	NPTS = (optim.getExp()).size();
+    	NRESP = (optim.getExp().get(0)).size();
     	
     	//resid = new double[NPTS][NRESP];
     	resid = new double[NPTS*NRESP];
@@ -58,12 +62,12 @@ public class NBMTHost implements NBMThostI {
     
     public NBMTHost(Optimization o, boolean stat) throws IOException, InterruptedException
     {
-    	this.optimization = o;
-    	this.parms = optimization.retrieve_fitted_parameters();
+    	this.optim = o;
+    	this.parms = Tools.retrieveFittedParameters(optim.getCoefficients());
     	
     	NPARMS = parms.length;
-    	NPTS = (optimization.getExp()).size();
-    	NRESP = (optimization.getExp().get(0)).size();
+    	NPTS = (optim.getExp()).size();
+    	NRESP = (optim.getExp().get(0)).size();
     	
     	//resid = new double[NPTS][NRESP];
     	resid = new double[NPTS*NRESP];
@@ -71,6 +75,8 @@ public class NBMTHost implements NBMThostI {
 
        
     }
+    
+
 	public boolean bBuildJacobian() throws IOException, InterruptedException {
 		// Allows LM to compute a new Jacobian.
 	    // Uses current parms[] and two-sided finite difference.
@@ -226,10 +232,14 @@ public class NBMTHost implements NBMThostI {
 	public double dComputeResid() throws IOException, InterruptedException {
 		// Evaluates residual matrix for parms[].
 		// Returns sum-of-squares.
+	
+		//do update of chemistry input with new parameter trials:
+		Tools.update_chemistry_input(optim.getPaths(), parms, optim.getCoefficients());
+		
 		/**
 		 * TODO deal with CKSolnList flag, employed in .getModelValues()
 		 */
-		function = new Function (optimization.getModelValues(optimization.buildFullParamVector(parms),true), optimization.getExp());
+		function = new Function (optim.getModelValues(true), optim.getExp());
 		resid = function.getResid();
 		return function.getSRES();
 	}
@@ -264,7 +274,7 @@ public class NBMTHost implements NBMThostI {
 	 * @return
 	 * @author nmvdewie
 	 */
-	public double [] getParms(){
+	public Double[] getParms(){
 		return parms;
 	}
 	public Function getFunction(){

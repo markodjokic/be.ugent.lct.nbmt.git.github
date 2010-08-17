@@ -3,6 +3,8 @@ import java.util.*;
 import java.io.*;
 
 
+
+
 public class Param_Est{
 
 	/**
@@ -15,16 +17,16 @@ public class Param_Est{
 	public int maxeval;
 	
 	public int noExp;
-	public String expName;
 	private List<Map<String, Double>> exp;
 	private List<Map<String,Double>> model;
 	
-	private Parameters2D params;
-	public Parameters2D getParams() {
-		return params;
+	//private Parameters2D params;
+	private List<ModifiedArrheniusKinetics> coefficients;
+	public List<ModifiedArrheniusKinetics> getParams() {
+		return coefficients;
 	}
-	public void setParams(Parameters2D params) {
-		this.params = params;
+	public void setParams(List<ModifiedArrheniusKinetics> coefficients) {
+		this.coefficients = coefficients;
 	}
 	
 	//optimization flags:
@@ -37,17 +39,17 @@ public class Param_Est{
 		this.paths = paths;
 	}
 	//construct for parity mode:
-	public Param_Est(Paths paths, Parameters2D params, int no_experiments, String experiments_name, int m_eval){
+	public Param_Est(Paths paths, List<ModifiedArrheniusKinetics> params, int no_experiments, int m_eval){
 		this.paths = paths;
-		this.params = params;
+		this.coefficients = params;
 		noExp = no_experiments;
-		expName = experiments_name;
+
 		maxeval = m_eval;
 	}
 	
 	//constructor used for parameter optimization option:
-	public Param_Est(Paths paths, Parameters2D params, int no_experiments, String experiments_name, int m_eval, boolean flag_Rosenbrock, boolean flag_LM){
-		this(paths, params, no_experiments, experiments_name, m_eval);
+	public Param_Est(Paths paths, List<ModifiedArrheniusKinetics> params, int no_experiments, int m_eval, boolean flag_Rosenbrock, boolean flag_LM){
+		this(paths, params, no_experiments, m_eval);
 		this.flagRosenbrock = flag_Rosenbrock;
 		this.flagLM = flag_LM;
 	}
@@ -69,31 +71,31 @@ public class Param_Est{
 		c.checkChemInput();
 		
 		// take initial guesses from chem.inp file:
-		params.setBeta(Tools.initialGuess(paths.getWorkingDir(), paths.getChemInp(), params.getFixRxns()));
+		coefficients = Tools.initialGuess(paths.getWorkingDir(), paths.getChemInp(), coefficients);
 		System.out.println("Initial Guesses of parameters are:");
-		print(params.getBeta());
+		print(coefficients);
 		
 		//read experimental data:
 		List<Map<String,Double>> exp = new ArrayList<Map<String,Double>>();
-		exp = Tools.experimentsParser(expName, noExp);
+		exp = Tools.experimentsParser(paths.getExpDb(), noExp);
 		//System.out.println(exp.toString());
 
-		Optimization optimization = new Optimization(paths, params, maxeval, flagRosenbrock, flagLM, exp);
+		Optimization optimization = new Optimization(paths, coefficients, maxeval, flagRosenbrock, flagLM, exp);
 		
 		//call optimization routine:
-		params.setBeta(optimization.optimize(exp));
+		coefficients = optimization.optimize(exp);
 		
 		//print optimized parameters:
 		System.out.println("New values of parameters are: ");
-		print(params.getBeta());
+		print(coefficients);
 		PrintWriter out = new PrintWriter(new FileWriter("params.txt"));
 
-		for (int i = 0; i < params.getBeta().length; i++) {
-			out.println("Reaction "+i+": ");
-			for (int j = 0; j < params.getBeta()[0].length; j++){
-				out.print(params.getBeta()[i][j]+", ");
-			}
-			out.println();			
+		for(ModifiedArrheniusKinetics con : coefficients){
+			out.println("Reaction Parameters: ");
+			out.print("A: "+con.getA().getuDouble().getValue()+"\\t");
+			out.print("n: "+con.getN().getuDouble().getValue()+"\\t");
+			out.println("Ea: "+con.getEa().getuDouble().getValue());
+			out.println();
 		}
 		
 		out.println();
@@ -211,7 +213,7 @@ public class Param_Est{
 		c.join();
 		
 		List<Map<String,Double>> model = getModelPredictionsMassfrac();
-		List<Map<String,Double>> exp = Tools.experimentsParser(expName, noExp);
+		List<Map<String,Double>> exp = Tools.experimentsParser(paths.getExpDb(), noExp);
 		List<String> speciesNames = Tools.getSpeciesNames(c.getPaths().getWorkingDir(), c.getAsu());
 
 		//WRITE PARITY FILE:
@@ -236,16 +238,17 @@ public class Param_Est{
 	    System.out.println("Time needed for Parity Mode to finish: (sec) "+timeTook);
 	}
 	
-	public void print(double [][] d){
-		for (int i = 0; i < d.length; i++) {
-			for (int j = 0; j < d[0].length; j++){
-				System.out.print(d[i][j]+" ");		
-			}
+	public void print(List<ModifiedArrheniusKinetics> kin){
+		for(ModifiedArrheniusKinetics c : kin){
+			System.out.println("Reaction Parameters: ");
+			System.out.println("A: "+c.getA().getuDouble().getValue());
+			System.out.println("n: "+c.getN().getuDouble().getValue());
+			System.out.println("Ea: "+c.getEa().getuDouble().getValue());
+			System.out.println();
 		}
-		System.out.println();
 	}
 	public List<Map<String, Double>> getExp() throws IOException {
-		exp = Tools.experimentsParser(expName, noExp);
+		exp = Tools.experimentsParser(paths.getExpDb(), noExp);
 		return exp;
 	}
 	public List<Map<String, Double>> getModel() {
@@ -260,16 +263,16 @@ public class Param_Est{
 		c.checkChemInput();
 		
 		// take initial guesses from chem.inp file:
-		params.setBeta(Tools.initialGuess(paths.getWorkingDir(), paths.getChemInp(), params.getFixRxns()));
+		coefficients = Tools.initialGuess(paths.getWorkingDir(), paths.getChemInp(), coefficients);
 		System.out.println("Initial Guesses of parameters are:");
-		print(params.getBeta());
+		print(coefficients);
 		
 		//read experimental data:
 		List<Map<String,Double>> exp = new ArrayList<Map<String,Double>>();
-		exp = Tools.experimentsParser(expName, noExp);
+		exp = Tools.experimentsParser(paths.getExpDb(), noExp);
 		//System.out.println(exp.toString());
 
-		Optimization optimization = new Optimization(paths, params, maxeval, flagRosenbrock, flagLM, exp);
+		Optimization optimization = new Optimization(paths, coefficients, maxeval, flagRosenbrock, flagLM, exp);
 		
 		optimization.calcStatistics();
 		//moveOutputFiles();

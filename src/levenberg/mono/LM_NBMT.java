@@ -65,7 +65,7 @@ class LM_NBMT
             niter++;
             
             out.println("New parameters: ");
-            myH.printArray(myH.getParms(),out);
+//            myH.printArray(myH.getParms(),out);
             System.out.println("niter: "+niter);
             out.println("niter: "+niter);
             

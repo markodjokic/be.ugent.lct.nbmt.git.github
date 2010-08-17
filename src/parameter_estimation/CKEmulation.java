@@ -17,8 +17,6 @@ public class CKEmulation extends Thread{
 		return paths;
 	}
 
-
-
 	private String reactorDir;
 	
 	private Runtime r;
@@ -96,7 +94,7 @@ public class CKEmulation extends Thread{
 		try {
 			semaphore.acquire();
 			
-			System.out.println("license acquired!"+reactorSetup);
+			//System.out.println("license acquired!"+reactorSetup);
 			
 			//copy chem.inp to the reactorDir:
 			Tools.copyFile(paths.getWorkingDir()+paths.getChemInp(),reactorDir+paths.getChemInp());
@@ -142,7 +140,7 @@ public class CKEmulation extends Thread{
 			//when all Chemkin routines are finished, release the semaphore:
  			semaphore.release();
  			
-			System.out.println("license released!"+reactorSetup);
+			//System.out.println("license released!"+reactorSetup);
 			
 		} catch(Exception exc){
 			System.out.println("Exception happened in CKEmulation run() method! - here's what I know: ");
@@ -354,15 +352,15 @@ public class CKEmulation extends Thread{
 		 BufferedReader stdError_p = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 	    
 		// read the output from the command
-	        System.out.println("Here is the standard output of the command:\n");
+	        //System.out.println("Here is the standard output of the command:\n");
 	        while ((s = stdInput_p.readLine()) != null) {
-	            System.out.println(s);
+	           //System.out.println(s);
 	        }
 	        stdInput_p.close();
 	   // read any errors from the attempted command
-	        System.out.println("Here is the standard error of the command (if any):\n");
+	        //System.out.println("Here is the standard error of the command (if any):\n");
 	        while ((s = stdError_p.readLine()) != null) {
-	            System.out.println(s);
+	            //System.out.println(s);
 	        }
 	        stdError_p.close();
 	        
@@ -386,15 +384,15 @@ public class CKEmulation extends Thread{
 		 BufferedReader stdError_p = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 	    
 		// read the output from the command
-	        System.out.println("Here is the standard output of the command:\n");
+	        //System.out.println("Here is the standard output of the command:\n");
 	        while ((s = stdInput_p.readLine()) != null) {
-	            System.out.println(s);
+	            //System.out.println(s);
 	        }
 	        stdInput_p.close();
 	   // read any errors from the attempted command
-	        System.out.println("Here is the standard error of the command (if any):\n");
+	        //System.out.println("Here is the standard error of the command (if any):\n");
 	        while ((s = stdError_p.readLine()) != null) {
-	            System.out.println(s);
+	            //System.out.println(s);
 	        }
 	        stdError_p.close();
 	        

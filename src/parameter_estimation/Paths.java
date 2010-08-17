@@ -9,25 +9,33 @@ import java.io.File;
  *
  */
 public class Paths {
-	protected String workingDir;
-	protected String chemkinDir;
-	protected String binDir;
-	protected String chemInp;
-	protected String [] reactorInputs;
-	protected String outputDir;
+	String workingDir;
+	String chemkinDir;
+	String binDir;
+	String chemInp;
+	String [] reactorInputs;
+	String expDb;
+	public String getExpDb() {
+		return expDb;
+	}
+	String outputDir;
 
 	//no_licenses sets the limiting number for the counting semaphore
-	protected int noLicenses;
+	int noLicenses;
 	
-	public Paths (String wd, String cd, String c_inp, String [] r_inp, int no_lic){
-		workingDir = wd;
-		chemkinDir = cd;
-		chemInp = c_inp;
-		reactorInputs = r_inp;
-		outputDir = workingDir+"output/";
-		binDir = chemkinDir+"/bin/";
+	public Paths (String workingDir, String chemkinDir, String chemInp, String [] reactorInputs, int noLicenses, String expDb){
+		this.workingDir = workingDir;
+		this.chemkinDir = chemkinDir;
+		this.chemInp = chemInp;
+		this.reactorInputs = reactorInputs;
+		this.outputDir = workingDir+"output/";
+		this.binDir = chemkinDir+"/bin/";
+		/**
+		 * TODO no. of licenses should not be part of Paths
+		 */
+		this.noLicenses = noLicenses;
+		this.expDb = expDb;
 		createOutputDir();
-		noLicenses = no_lic;
 		
 	}
 	protected void createOutputDir (){

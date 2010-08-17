@@ -69,7 +69,7 @@ public class Function {
 		}
 */		
 		for (int i = 0; i < resid.length; i++)		
-				sum += resid[i]*resid[i];
+				sum += Math.pow(resid[i],2);
 		
 		return sum;
 	}
