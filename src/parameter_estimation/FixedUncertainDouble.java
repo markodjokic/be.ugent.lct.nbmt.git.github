@@ -1,5 +1,7 @@
 package parameter_estimation;
 
+import parameter_estimation.jing.mathtool.UncertainDouble;
+
 
 /**
  * this class extends UncertainDouble (e.g. A,n,Ea) with a boolean 'fixed' that states whether this UncertainDouble

@@ -234,7 +234,7 @@ public class NBMTHost implements NBMThostI {
 		// Returns sum-of-squares.
 	
 		//do update of chemistry input with new parameter trials:
-		Tools.update_chemistry_input(optim.getPaths(), parms, optim.getCoefficients());
+		Tools.updateChemistryInput(optim.getPaths(), parms, optim.getCoefficients());
 		
 		/**
 		 * TODO deal with CKSolnList flag, employed in .getModelValues()

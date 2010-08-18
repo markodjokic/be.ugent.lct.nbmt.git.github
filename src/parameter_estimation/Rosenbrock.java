@@ -30,7 +30,13 @@ public class Rosenbrock{
 	public Double [] lower;
 	public Double [] upper;
 
-	public Double[] parms;
+	private Double[] parms;
+
+	public Double[] getParms() {
+		return parms;
+	}
+
+
 
 	public double[] e;
 	
@@ -77,7 +83,7 @@ public class Rosenbrock{
 		this.FAIL = fail;
 	}
 
-	public Double[] returnOptimizedParameters() throws IOException, InterruptedException{
+	public void optimize() throws IOException, InterruptedException{
 		//basis needs to be declared with the correct dimensions:
 		basis = new double [parms.length][parms.length];
 
@@ -100,7 +106,7 @@ public class Rosenbrock{
 		double initial = f.getSRES();
 		System.out.println("Initial SSQ: "+initial);
 		double current = initial;
-		System.out.println("Current value: "+current);
+		//System.out.println("Current value: "+current);
 		outSSQ.println(neval+","+initial);
 		
 		// Set all flags to 2, i.e. no success has been achieved in direction i
@@ -111,9 +117,8 @@ public class Rosenbrock{
 		
 		Function fNew;
 		// Main rosenbrock loop
-		while (neval < optim.maxeval) {
-			Double [] parms_trial = new Double[parms.length];
-			
+		Double [] parms_trial = new Double[parms.length];
+		while (neval < maxeval) {			
 			for (int i = 0; i < parms.length; i++) {
 					System.out.println("Beta: ");
 					print(Tools.retrieveFittedParameters(optim.getCoefficients()));
@@ -145,7 +150,7 @@ public class Rosenbrock{
 					System.out.println("Evaluation no. "+neval);
 					
 					//do update of chemistry input with new parameter trials:
-					Tools.update_chemistry_input(optim.getPaths(), parms_trial, optim.getCoefficients());
+					Tools.updateChemistryInput(optim.getPaths(), parms_trial, optim.getCoefficients());
 					
 					//model predictions with new parameter guesses is called:
 					//set flag_CKSolnList to false to prevent calling the CKSolnList creator once again:
@@ -166,7 +171,7 @@ public class Rosenbrock{
 				
 						//put successful parameter values of parms_trial in parms and in optimization.coefficients:
 						parms = parms_trial.clone();
-						optim.setCoefficients(Tools.SetListWithVector(parms, optim.getCoefficients()));
+						optim.setCoefficients(Tools.setListWithVector(parms, optim.getCoefficients()));
 						
 						current = trial;
 						for (int j = 0; j < d.length; j++) {
@@ -209,8 +214,6 @@ public class Rosenbrock{
 		
 		out.close();
 		outSSQ.close();
-				
-		return parms;
 	}
 	/**
 	 * Initialization of the basis, taking unit vectors in every direction of the parameters
@@ -309,4 +312,5 @@ public class Rosenbrock{
 		}
 		System.out.println();
 	}
+	
 }

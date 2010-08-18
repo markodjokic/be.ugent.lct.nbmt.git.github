@@ -95,14 +95,15 @@ public class Optimization{
 */			
 			System.out.println("Start of Rosenbrock!");
 			rosenbrock = new Rosenbrock(this, maxeval);
-			setCoefficients(Tools.SetListWithVector(rosenbrock.returnOptimizedParameters(), coefficients));
+			rosenbrock.optimize();
+			setCoefficients(Tools.setListWithVector(rosenbrock.getParms(), coefficients));
 			
 		}
 
 		if(flagLM){
 			System.out.println("Start of Levenberg-Marquardt!");
 			nbmthost = new NBMTHost(this);
-			setCoefficients(Tools.SetListWithVector(nbmthost.getParms(), coefficients));		
+			setCoefficients(Tools.setListWithVector(nbmthost.getParms(), coefficients));		
 		}
 
 
@@ -173,11 +174,9 @@ public class Optimization{
 	public void calcStatistics() throws IOException, InterruptedException{
 		nbmthost = new NBMTHost(this, true);
 		nbmthost.bBuildJacobian();
-		//beta_new = convert_1D_to_2D(buildFullParamVector(nbmthost.getParms()));
 		Statistics s = new Statistics(this);
 		PrintWriter out = new PrintWriter(new FileWriter("statistics.txt"));
 		out.println("Averages of response variables:");
-		//out.println(this.nbmtmultiDhost.getFunction().calcAverage());
 		out.println(this.nbmthost.getFunction().calcAverage());
 		out.println();
 		out.println("Variance-covariance of parameter estimations:");

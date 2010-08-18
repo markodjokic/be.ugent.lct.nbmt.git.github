@@ -13,11 +13,12 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+
+import parameter_estimation.jing.mathtool.UncertainDouble;
 
 
 /**
@@ -37,11 +38,11 @@ public class Tools {
 		File original_dir = new File(orig_dir);
 		String[] list = original_dir.list(filter);
 		if (list.length == 0) return;
-
+		boolean success;
 		for (int i = 0; i < list.length; i++) {
 			// Move file to new directory
 			File file = new File(list[i]);
-			boolean success = file.renameTo(new File(dest_dir, list[i]));
+			success = file.renameTo(new File(dest_dir, list[i]));
 			System.out.println( "File was successfully moved? " + success + "!");
 		}    
 	}
@@ -52,9 +53,7 @@ public class Tools {
 
 		// Move file to new directory
 		boolean success = file.renameTo(new File(dest_dir, file.getName()));
-		if (!success) {
-			// File was not successfully moved
-		}
+	
 	}
 	/**
 	 * from: http://forums.sun.com/thread.jspa?threadID=563148
@@ -108,7 +107,7 @@ public class Tools {
 		}
 	}
 
-	public static List<ModifiedArrheniusKinetics> SetListWithVector(Double [] vector, List<ModifiedArrheniusKinetics> kin){
+	public static List<ModifiedArrheniusKinetics> setListWithVector(Double [] vector, List<ModifiedArrheniusKinetics> kin){
 		//convert 1D vector back to List<ConstrainedArrheniusKinetics> notation:
 		int counter = 0;
 		
@@ -443,7 +442,7 @@ public class Tools {
 	 * return the chemistry input filename<BR>
 	 * WARNING: method supposes TD inside chemistry input file!!!<BR>
 	 */
-	public static void update_chemistry_input (Paths p, Double [] d, List<ModifiedArrheniusKinetics> l) throws IOException{
+	public static void updateChemistryInput (Paths p, Double [] d, List<ModifiedArrheniusKinetics> l) throws IOException{
 		BufferedReader in = new BufferedReader(new FileReader(p.getWorkingDir()+p.getChemInp()));
 		PrintWriter out = new PrintWriter(new FileWriter(p.getWorkingDir()+"temp.inp"));
 		String dummy = in.readLine();
