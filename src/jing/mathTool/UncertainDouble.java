@@ -27,11 +27,10 @@
 
 
 
-package parameter_estimation.jing.mathtool;
+package jing.mathTool;
 
 
 import java.util.*;
-
 
 //## package jing::mathTool 
 

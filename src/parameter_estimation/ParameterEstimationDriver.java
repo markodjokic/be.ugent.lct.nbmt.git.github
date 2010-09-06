@@ -10,14 +10,14 @@ import java.util.Iterator;
 import java.util.List;
 
 
-
 public class ParameterEstimationDriver {
-	//this comment is added to verify version control system
+
 	/**
 	 * @param args
 	 * @throws Exception 
+	 * @throws Exception 
 	 */
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws Exception {
 		long time = System.currentTimeMillis();
 
 		//input file will be searched in working directory under the name INPUT.txt:
@@ -54,23 +54,28 @@ public class ParameterEstimationDriver {
 
 		in.readLine();
 		String reactorSetupsDb = in.readLine();
-
+		
+		in.readLine();
+		Integer reactorSetupType = Integer.parseInt(in.readLine());
+		
 		in.readLine();
 		int noExperiments = Integer.parseInt(in.readLine());
 
 		//number of parameters to be fitted:
 		in.readLine();
-		int noParams = Integer.parseInt(in.readLine());
-
+		in.readLine();
+		
 		//optimization flags:
 		in.readLine();
 		boolean flagRosenbrock = Boolean.parseBoolean(in.readLine());
 		in.readLine();
 		boolean flagLM = Boolean.parseBoolean(in.readLine());
 
+		//maximum number of Rosenbrock evaluations:
 		in.readLine();
 		int maxeval = Integer.parseInt(in.readLine());
 
+		//parameter estimation mode:
 		in.readLine();
 		int mode = Integer.parseInt(in.readLine());
 
@@ -96,9 +101,6 @@ public class ParameterEstimationDriver {
 		in.readLine();
 		int noFittedReactions = Integer.parseInt(in.readLine());
 
-		//number of parameters per reaction (modified Arrhenius [A,n,Ea]): 3
-		int noParametersPerReaction = 3;
-
 		List<ModifiedArrheniusKinetics> kin = new ArrayList();
 		for (int i = 0; i < noFittedReactions; i++){
 			//comment line with "reaction i: "
@@ -110,7 +112,8 @@ public class ParameterEstimationDriver {
 			ConstrainedUncertainDouble n = new ConstrainedUncertainDouble(Integer.parseInt(s[1])==0);
 			ConstrainedUncertainDouble Ea = new ConstrainedUncertainDouble(Integer.parseInt(s[2])==0);
 
-			/*we populate the ArrayList kin, with the information we already have, i.e. information on whether or not
+			/**
+			 * we populate the ArrayList kin, with the information we already have, i.e. information on whether or not
 			 * some parameters need to be optimized.
 			 */
 			kin.add(new ModifiedArrheniusKinetics(A,n,Ea));
@@ -122,22 +125,19 @@ public class ParameterEstimationDriver {
 			System.out.println("Number of parameters to be fitted provided in INPUT.txt does not equal the number of ones you specified in the optimization section in INPUT.txt!");
 			System.exit(-1);
 		}
-		else {
-			//do nothing, continue
-		}
 
 		in.close();
 
 		String template = "reactor_input_template.inp";
 
-		/*
+		/**
 		 * for now, constraints on parameters are hard coded here:
 		 */
 		double min = 0;
 		double max = 1e20;
 
 
-		/*
+		/**
 		 * we populate min and max constraints in parameter container
 		 */
 		for(Iterator<ModifiedArrheniusKinetics> it = kin.iterator(); it.hasNext();){
@@ -149,23 +149,20 @@ public class ParameterEstimationDriver {
 			c.getEa().setMin(min);
 			c.getEa().setMax(max);
 		}
-		/*		
-		double [][] betaMin = new double [noFittedReactions][noParametersPerReaction];
-		double [][] betaMax = new double [noFittedReactions][noParametersPerReaction];
-		for (int i = 0; i < noFittedReactions; i++) {
-			for (int j = 0; j < noParametersPerReaction; j++){
-				betaMin[i][j]=0;
-				betaMax[i][j]=1e20;
+		
+		if (flagReactorDb){
+			if(reactorSetupType==1){
+			reactor_inputs = reactorInputsParser(workingDir, reactorSetupsDb, template, noExperiments);
+			}
+			if(reactorSetupType==2){
+				reactor_inputs = reactorInputsParser2(workingDir, reactorSetupsDb, template, noExperiments);
 			}
 		}
-		 */		
-		if (flagReactorDb){
-			reactor_inputs = reactorInputsParser(workingDir, reactorSetupsDb, template, noExperiments);
-		}
-
+		
+		
 		Paths paths = new Paths(workingDir,chemkinDir,chemInp,reactor_inputs,noLicenses, experimentsDb);
 
-		//		Parameters2D params = new Parameters2D(null, betaMin, betaMax, fixRxns);
+
 		switch(mode){
 		case 0:	System.out.println("PARITY PLOT MODE");	
 		Param_Est p0 = new Param_Est(paths, kin, noExperiments, maxeval);
@@ -196,7 +193,7 @@ public class ParameterEstimationDriver {
 	}
 	public static String[] reactorInputsParser(String workingDir, String experiments, String template, int no_experiments) throws IOException{
 		ArrayList<String> reactorInputs = new ArrayList<String>();
-
+		String filename;
 		//read first line of excel input:
 		/*
 		 * Reading the first line will reveal:<BR>
@@ -266,7 +263,8 @@ public class ParameterEstimationDriver {
 				String [] dummy_array = line.split(",");
 				//experiment_counter contains the experiment number that will be used in the reactor input file name:
 				experiment_counter = Integer.parseInt(dummy_array[0]);
-				String filename = "reactor_input_"+experiment_counter+".inp";
+				filename = "reactor_input_"+experiment_counter+".inp";
+				
 				reactorInputs.add(filename);
 				PrintWriter out = new PrintWriter(new FileWriter(workingDir+filename));
 
@@ -333,28 +331,144 @@ public class ParameterEstimationDriver {
 		}
 
 		//convert ArrayList to String []:
-		String [] a = new String [reactorInputs.size()];
+		String[] a = new String[reactorInputs.size()];
+		reactorInputs.toArray(a);
+/*		String [] a = new String [reactorInputs.size()];
 		for (int i = 0; i < reactorInputs.size(); i++){
 			a[i] = reactorInputs.get(i);
-		} 
+		}
+*/ 
 		return a;
 	}
-	/**
-	 * check if number of parameters to be fitted, given in INPUT.txt is equal to the number of ones given in the optimization section in INPUT.txt
-	 * @param fix_reactions
-	 * @param no_params
-	 * @return
-	 */
-	public static boolean checkNoParameters(int [][] fix_reactions, int no_params){
-		int counter = 0;
-		for (int i = 0; i < fix_reactions.length; i++){
-			for (int j = 0; j < fix_reactions[0].length; j++){
-				counter+=fix_reactions[i][j];
-			}
+	public static String[] reactorInputsParser2 (String workingDir, String experiments, String template, int no_experiments) throws IOException{
+		ArrayList<String> reactorInputs = new ArrayList<String>();
+		String filename;
+		//read first line of excel input:
+		/*
+		 * Reading the first line will reveal:<BR>
+		 * <LI>the number and names of species at the reactor inlet</LI>
+		 * <LI>the T profile</LI>
+		 * <LI>the P profile</LI>		
+		 */
+		BufferedReader in_excel = new BufferedReader(new FileReader(workingDir+experiments));
+
+		String [] dummy = in_excel.readLine().split(",");
+
+		//		NOS : number of species
+		int NOS = dummy.length-1;
+		ArrayList<String> species_name = new ArrayList<String>();
+		for (int i = 0; i < NOS; i++){
+			species_name.add(dummy[1+i]);
 		}
-		return (counter == no_params); 
 
+		dummy = in_excel.readLine().split(",");
+		ArrayList<Double> species_mw = new ArrayList<Double>();
+		for (int i = 0; i < NOS; i++){
+			species_mw.add(Double.parseDouble(dummy[1+i]));
+		}
+
+
+		/*
+		 * Start writing the actual reactor input file, by doing the following:<BR>
+		 * <LI>read in the lines of the template reactor input file that remain unchanged. write them to your output file</LI>
+		 * <LI>change total mass flow rate</LI>
+		 * <LI>add Pressure profile</LI>
+		 * <LI>add Temperature profile</LI>
+		 * <LI>add diameter</LI>
+		 */
+
+		int experiment_counter = 0;
+		String line = null;
+		in_excel.readLine();
+		try {
+			line = in_excel.readLine();
+			
+			double convert_m_cm = 100;
+			double convert_C_K = 273.15;
+			double diameter, length, temperature, pressure;
+			
+			while(!dummy.equals(null)){				
+				BufferedReader in_template = new BufferedReader(new FileReader(workingDir+template));
+				String [] dummy_array = line.split(",");
+				//experiment_counter contains the experiment number that will be used in the reactor input file name:
+				experiment_counter = Integer.parseInt(dummy_array[0]);
+				filename = "reactor_input_"+experiment_counter+".inp";
+				
+				reactorInputs.add(filename);
+				PrintWriter out = new PrintWriter(new FileWriter(workingDir+filename));
+
+				//copy the first 7 lines:
+				for(int i = 0 ; i < 7 ; i++){
+					String d = in_template.readLine();
+					out.println(d);
+				}
+
+				//total mass flow rate:
+				double massflrt = 0.0;
+				double molflrt = 0.0;
+				for(int i = 0 ; i < NOS; i++){
+					massflrt=massflrt + Double.parseDouble(dummy_array[1+i])/3600;
+					molflrt=molflrt + Double.parseDouble(dummy_array[1+i])/species_mw.get(i);
+				}
+
+				out.println("FLRT"+" "+massflrt);
+
+				convert_m_cm = 100;
+				//Diameter:
+				diameter = Double.parseDouble(dummy_array[NOS+1]) * convert_m_cm;
+				out.println("DIAM "+diameter);
+
+				//reactor length: 
+				length = Double.parseDouble(dummy_array[NOS+2]) * convert_m_cm;
+				out.println("XEND "+length);
+				
+				//temperature:
+				temperature = Double.parseDouble(dummy_array[NOS+3])+convert_C_K;
+				out.println("TPRO 0.0"+" "+temperature);
+				out.println("TPRO "+length+" "+temperature);
+				
+				//pressure:
+				pressure = Double.parseDouble(dummy_array[NOS+4]);
+				out.println("PPRO 0.0"+" "+pressure);
+				out.println("PPRO "+length+" "+pressure);
+				
+				//Inlet Species:
+				double molfr = 0.0;
+				for(int i = 0 ; i < NOS; i++){
+					molfr = (Double.parseDouble(dummy_array[1+i])/species_mw.get(i))/molflrt;
+					out.println("REAC "+species_name.get(i)+" "+molfr);
+				}
+
+				//force solver to use nonnegative species fractions:
+				out.println("NNEG");
+
+				//END:
+				out.println("END");
+
+				in_template.close();
+				out.close();
+				line = in_excel.readLine();
+			}
+			in_excel.close();
+		}catch (Exception e){}//do nothing: e catches the end of the file exception
+
+		// verify the correct number of lines in reactor input file:
+		if( reactorInputs.size()!= no_experiments){
+			System.out.println("Number of experiments in reactor inputs file does not correspond to the number of experiments provided in the INPUT file! Maybe check if .csv file contains redundant 'comma' lines.");
+			System.exit(-1);
+		}
+
+		//convert ArrayList to String []:
+		String [] a = new String[reactorInputs.size()];
+		reactorInputs.toArray(a);
+
+		return a;
 	}
-
+	public static boolean checkNoParameters(){
+		return true;
+	}
+	
+	
+	
 
 }

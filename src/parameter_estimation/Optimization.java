@@ -1,8 +1,6 @@
 package parameter_estimation;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,6 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import jing.mathTool.UncertainDouble;
+import jing.param.Temperature;
+import jing.rxn.ArrheniusKinetics;
 
 import stat.Statistics;
 
@@ -49,7 +51,17 @@ public class Optimization{
 	boolean flagRosenbrock;
 	boolean flagLM;
 	boolean weightedRegression;
+	boolean parametrized = true;
+	
+	public boolean isParametrized() {
+		return parametrized;
+	}
 
+	Temperature avgTemp;
+
+	public Temperature getAvgTemp() {
+		return avgTemp;
+	}
 
 	private List<Map<String,Double>> exp;
 
@@ -66,11 +78,13 @@ public class Optimization{
 	private NBMTHost nbmthost;
 
 	//constructor:
-	public Optimization (Paths paths, List<ModifiedArrheniusKinetics> coefficients, int m, boolean f_r, boolean f_L, List<Map<String,Double>>exp){
+	public Optimization (Paths paths, List<ModifiedArrheniusKinetics> coefficients, int m, boolean f_r, boolean f_L, List<Map<String,Double>>exp) throws Exception{
 		this.paths = paths;
 		this.coefficients = coefficients;
 		maxeval = m;
-
+		if (parametrized){
+			avgTemp = Tools.calcAvgTemp(paths.getWorkingDir(), paths.getReactorInputs());
+		}
 		flagRosenbrock = f_r;
 		flagLM = f_L;
 		//		weighted_regression = w_r;
@@ -96,14 +110,14 @@ public class Optimization{
 			System.out.println("Start of Rosenbrock!");
 			rosenbrock = new Rosenbrock(this, maxeval);
 			rosenbrock.optimize();
-			setCoefficients(Tools.setListWithVector(rosenbrock.getParms(), coefficients));
+			setCoefficients(Tools.setListWithVector(rosenbrock.getParms(), this));
 			
 		}
 
 		if(flagLM){
 			System.out.println("Start of Levenberg-Marquardt!");
 			nbmthost = new NBMTHost(this);
-			setCoefficients(Tools.setListWithVector(nbmthost.getParms(), coefficients));		
+			setCoefficients(Tools.setListWithVector(nbmthost.getParms(), this));		
 		}
 
 
@@ -164,9 +178,6 @@ public class Optimization{
 
 		return dummy;
 	}
-	
-
-
 
 	public NBMTHost getNBMTHost(){
 		return nbmthost;

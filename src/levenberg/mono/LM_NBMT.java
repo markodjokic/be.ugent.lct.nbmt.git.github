@@ -23,12 +23,12 @@ import java.io.PrintWriter;
   */
 class LM_NBMT    
 {
-    private final int    LMITER     =  100;     // max number of L-M iterations
+    private final int    LMITER     =  30;//100     // max number of L-M iterations
     private final double LMBOOST    =  2.0;     // damping increase per failed step
     private final double LMSHRINK   = 0.10;     // damping decrease per successful step
     private final double LAMBDAZERO = 0.001;    // initial damping
     private final double LAMBDAMAX  =  1E3;     // max damping
-    private final double LMTOL      = 1E-12;    // exit tolerance
+    private final double LMTOL      = 1E-3;//1E-12    // exit tolerance
     private final double BIGVAL = 9.876543E+210; 
  
     private double sos, sosprev, lambda;

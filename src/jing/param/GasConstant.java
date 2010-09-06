@@ -27,34 +27,64 @@
 
 
 
-package parameter_estimation.jing.mathtool;
+package jing.param;
 
 
 import java.util.*;
 
-//## package jing::mathTool 
+//## package jing::param 
 
 //----------------------------------------------------------------------------
-// jing\mathTool\InvalidUncertaintyTypeException.java                                                                  
+// jing\param\GasConstant.java                                                                  
 //----------------------------------------------------------------------------
 
-//## class InvalidUncertaintyTypeException 
-public class InvalidUncertaintyTypeException extends RuntimeException{
+//## class GasConstant 
+public class GasConstant {
     
     
     // Constructors
     
-    //## operation InvalidUncertaintyTypeException(String) 
-    public  InvalidUncertaintyTypeException(String s) {
-        //#[ operation InvalidUncertaintyTypeException(String) 
-        super(s);
+    public  GasConstant() {
+    }
+    
+    //## operation getCCAtmMolK() 
+    public static double getCCAtmMolK() {
+        //#[ operation getCCAtmMolK() 
+        //return 82.059;
+    	return 82.053;
         //#]
     }
-    public  InvalidUncertaintyTypeException() {
+    
+    //## operation getCalMolK() 
+    public static double getCalMolK() {
+        //#[ operation getCalMolK() 
+        return 1.987;
+        //#]
+    }
+    
+    //## operation getJMolK() 
+    public static double getJMolK() {
+        //#[ operation getJMolK() 
+        return 8.314;
+        //#]
+    }
+    
+    //## operation getKcalMolK() 
+    public static double getKcalMolK() {
+        //#[ operation getKcalMolK() 
+        return 0.001987;
+        //#]
+    }
+    
+    //## operation getStandard() 
+    public static double getStandard() {
+        //#[ operation getStandard() 
+        return getJMolK();
+        //#]
     }
     
 }
 /*********************************************************************
-	File Path	: RMG\RMG\jing\mathTool\InvalidUncertaintyTypeException.java
+	File Path	: RMG\RMG\jing\param\GasConstant.java
 *********************************************************************/
 

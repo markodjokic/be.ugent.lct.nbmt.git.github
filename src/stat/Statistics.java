@@ -18,7 +18,7 @@ public class Statistics {
 	private double [] t_values; //array of t_values of individual significance of fitted parameters
 	private double alpha = 0.05; //uncertainty used in tests of significance of parameter estimations
 	
-	private Optimization optimization;
+	private Optimization optim;
 	private double SREG;
 	private double SRES;
 	private double F_value;
@@ -27,7 +27,7 @@ public class Statistics {
 	private double[][] confidence_intervals; 
 	
 public Statistics(Optimization optimization){
-	this.optimization = optimization;
+	this.optim = optimization;
 	no_experiments = optimization.getNBMTHost().getNPTS();
 	no_parameters = optimization.getNBMTHost().getNPARMS();
 	no_responses = optimization.getNBMTHost().getNRESP();
@@ -39,9 +39,9 @@ public Statistics(Optimization optimization){
  */
 public void calc_var_covar() throws IOException, InterruptedException{
 	//double sos = optimization.getNBMTmultiDHost().getFunction().getSSQ();
-	double sos = optimization.getNBMTHost().getFunction().getSRES();
+	double sos = optim.getNBMTHost().getFunction().getSRES();
 	//double [][][] J = optimization.getNBMTmultiDHost().dGetFullJac();
-	double [][] J = optimization.getNBMTHost().dGetFullJac();
+	double [][] J = optim.getNBMTHost().dGetFullJac();
 	
 	
 	var_covar = new double[no_parameters][no_parameters];
@@ -60,14 +60,7 @@ public void calc_var_covar() throws IOException, InterruptedException{
 	JTJminus1 = gaussj(JTJminus1, JTJminus1.length); //inverse matrix of JTJ
 	
 	
-/*	double s_squared = sos/(no_experiments - no_parameters);
-	
-	for (int i = 0; i < JTJminus1.length; i++) {
-		for (int k = 0; k < JTJminus1[0].length; k++) {
-			var_covar[i][k] = JTJminus1[i][k] * s_squared;  
-		}
-	}
-*/	
+
 	var_covar = JTJminus1;
 	
 }
@@ -80,7 +73,7 @@ public void calc_corr(){
         }
 }
 public void calc_ANOVA() throws IOException, InterruptedException{
-	Function function = new Function (optimization.getModelValues(true), optimization.getExp());
+	Function function = new Function (optim.getModelValues(true), optim.getExp());
 	SREG = function.getSREG();
 	SRES = function.getSRES();
 	F_value = (SREG/no_parameters) / (SRES/(no_experiments * no_responses - no_parameters));
@@ -90,7 +83,7 @@ public void calc_ANOVA() throws IOException, InterruptedException{
  */
 public void calc_t_values(){
 
-	Double [] params = optimization.getNBMTHost().getParms();
+	Double [] params = optim.getNBMTHost().getParms();
 	
 	t_values = new double[params.length];
 	for (int i = 0; i < t_values.length; i++) {
@@ -105,7 +98,8 @@ public void calc_t_values(){
  */
 public void calc_confidence_intervals() throws IOException, InterruptedException{
 	//double [] params = optimization.getNBMTmultiDHost().getParms();
-	Double [] params = optimization.getNBMTHost().getParms();
+	//Double [] params = optim.getNBMTHost().getParms();
+	Double [] params = Tools.retrieveFittedParameters(optim);
 	confidence_intervals = new double[no_parameters][3];
 	
 	calc_tabulated_t();
@@ -212,38 +206,38 @@ public double [][] get_Corr() throws IOException, InterruptedException{
 public void printArray(double [] d, PrintWriter out){
 	for (int i = 0; i < d.length; i++) {
 		out.print(d[i]+" ");
-		System.out.print(d[i]+" ");
+		//System.out.print(d[i]+" ");
 	}
 	out.println();
-	System.out.println();
+	//System.out.println();
 }
 public void printMatrix(double [][] d,PrintWriter out){
 	for (int i = 0; i < d.length; i++) {
 		for (int j = 0; j < d[0].length; j++) {
 			out.print(d[i][j]+" ");
-			System.out.print(d[i][j]+" ");			
+			//System.out.print(d[i][j]+" ");			
 		}
 		out.println();
-    	System.out.println();
+    	//System.out.println();
 	}
 	out.println();
-	System.out.println();
+	//System.out.println();
 }
 public void print3DMatrix(double [][][] d,PrintWriter out){
 	for (int i = 0; i < d.length; i++) {
 		for (int j = 0; j < d[0].length; j++) {
 			for (int k = 0; k < d[0][0].length; k++) {
 				out.print(d[i][j][k]+" ");
-				System.out.print(d[i][j][k]+" ");			
+				//System.out.print(d[i][j][k]+" ");			
 			}
 			out.println();
-	    	System.out.println();
+	    	//System.out.println();
 		}
 		out.println();
-    	System.out.println();
+    	//System.out.println();
 	}
 	out.println();
-	System.out.println();
+	//System.out.println();
 }
 public double[] getT_values() {
 	calc_t_values();

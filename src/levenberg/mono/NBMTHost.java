@@ -13,13 +13,17 @@ import parameter_estimation.Tools;
 public class NBMTHost implements NBMThostI {
 
 	//--------constants---------------
-    protected final double DELTAP = 1e-4;//1e-6
+    //protected final double DELTAP = 1e-4;//1e-6
+	/*
+	 * take DELTAP equal to square root of computer's unit round-off
+	 * cf. Chemkin_THEORY p 224 ("Calculation of Jacobian")
+	 */
+    protected double DELTAP = Math.sqrt(Tools.calculateMachineEpsilonFloat());
     protected final double BIGVAL = 9.876543E+210; 
     protected int NPTS, NPARMS, NRESP, NEXPL; //modified by constructor
 
     //--------fields------------------
     
-    //private double resid[][]; //residual matrix Y - Y^ with rows as experiments
     private double resid[]; //residual matrix Y - Y^ with rows as experiments
     private double jac[][];  //2D jacobian
     private Double parms[];  // starting point
@@ -28,12 +32,12 @@ public class NBMTHost implements NBMThostI {
     private Function function;
     private LM_NBMT myLM;
     
-    private boolean additive_finite_difference = false; //additive implies that step in parameter direction will be regardless of parameter value
+    //private boolean additive_finite_difference = false; //additive implies that step in parameter direction will be regardless of parameter value
     
     public NBMTHost(Optimization o) throws IOException, InterruptedException
     {
     	this.optim = o;
-    	this.parms = Tools.retrieveFittedParameters(optim.getCoefficients());
+    	this.parms = Tools.retrieveFittedParameters(optim);
     	
     	NPARMS = parms.length;
     	NPTS = (optim.getExp()).size();
@@ -63,7 +67,7 @@ public class NBMTHost implements NBMThostI {
     public NBMTHost(Optimization o, boolean stat) throws IOException, InterruptedException
     {
     	this.optim = o;
-    	this.parms = Tools.retrieveFittedParameters(optim.getCoefficients());
+    	this.parms = Tools.retrieveFittedParameters(optim);
     	
     	NPARMS = parms.length;
     	NPTS = (optim.getExp()).size();
@@ -94,14 +98,13 @@ public class NBMTHost implements NBMThostI {
 	        for (int j=0; j<NPARMS; j++)
 	        {
 	            for (int k=0; k<NPARMS; k++){
-	            	if(additive_finite_difference){
-	            		delta[k] = (k==j) ? DELTAP : 0.0;
-	            		if (k==j) FACTOR = 0.5 / DELTAP;
-	            	}
-	            	else{
-	            		delta[k] = (k==j) ? parms[k] * DELTAP : 0.0;
-	            		if (k==j) FACTOR = 0.5 / (DELTAP * parms[k]);
-	            	}
+	            	/*
+	            	 * take relative and absolute perturbations around parameter values
+	            	 * cf. Chemkin_THEORY p 224 ("Calculation of Jacobian")
+	            	 */
+	            	delta[k] = (k==j) ? parms[k] * DELTAP + DELTAP: 0.0;
+            		if (k==j) FACTOR = 0.5 / (DELTAP * parms[k] + DELTAP);
+	            	
 	            }
 	              
 
@@ -118,12 +121,8 @@ public class NBMTHost implements NBMThostI {
 	            
 
 	            for (int k=0; k<NPARMS; k++){
-	            	if(additive_finite_difference){
-	            		delta[k] = (k==j) ? -2*DELTAP : 0.0;
-	            	}
-	            	else{
-	            		delta[k] = (k==j) ? -2*parms[k] * DELTAP : 0.0;	
-	            	}
+	            	delta[k] = (k==j) ? -2 * (parms[k] * DELTAP + DELTAP) : 0.0;
+	            	
 	            }
 
 	            d = dNudge(delta); // resid at pminus
@@ -140,12 +139,8 @@ public class NBMTHost implements NBMThostI {
 	            		jac[i][j] *= FACTOR;
 	           	           
 	            for (int k=0; k<NPARMS; k++){
-	            	if(additive_finite_difference){
-	            		delta[k] = (k==j) ? DELTAP : 0.0;
-	            	}
-	            	else{
-	            		delta[k] = (k==j) ? parms[k] * DELTAP : 0.0;	
-	            	}         
+	            	delta[k] = (k==j) ? parms[k] * DELTAP + DELTAP: 0.0;
+	            	        
 	            }
 
 	            d = dNudge(delta);  
@@ -187,14 +182,8 @@ public class NBMTHost implements NBMThostI {
 	            		jac[i][j] = -dGetResid(i);//fill up 2D jacobian with residuals	
 	             
 	        	for (int k=0; k<NPARMS; k++){
-	        		if(additive_finite_difference){
-	            		delta[k] = (k==j) ? DELTAP : 0.0;
-	            		FACTOR = 1 / DELTAP;
-	            	}
-	            	else{
-	            		delta[k] = (k==j) ? parms[k] * DELTAP : 0.0;	
-	            		FACTOR = 1 / (DELTAP * parms[k]);
-	            	}
+	        		delta[k] = (k==j) ? parms[k] * DELTAP + DELTAP : 0.0;	
+            		FACTOR = 1 / (DELTAP * parms[k] + DELTAP);
 	            }
 
 	            d = dNudge(delta); // resid at pplus
@@ -212,12 +201,7 @@ public class NBMTHost implements NBMThostI {
             		jac[i][j] *= FACTOR;
 	            
 	            for (int k=0; k<NPARMS; k++){//reset parameters to central point
-	            	if(additive_finite_difference){
-	            		delta[k] = (k==j) ? -DELTAP : 0.0;
-	            	}
-	            	else{
-	            		delta[k] = (k==j) ? -parms[k] * DELTAP : 0.0;	
-	            	}
+	            	delta[k] = (k==j) ? - (parms[k] * DELTAP + DELTAP) : 0.0;
 	            }
 	            	
 		        d = dNudge(delta);  
@@ -233,8 +217,10 @@ public class NBMTHost implements NBMThostI {
 		// Evaluates residual matrix for parms[].
 		// Returns sum-of-squares.
 	
-		//do update of chemistry input with new parameter trials:
-		Tools.updateChemistryInput(optim.getPaths(), parms, optim.getCoefficients());
+		// put new parameter trials in optim.coefficients:
+		optim.setCoefficients(Tools.setListWithVector(parms, optim));
+		//write new chemistry input with new parameter trials:
+		Tools.writeChemistryInput(optim.getPaths(), optim.getCoefficients());
 		
 		/**
 		 * TODO deal with CKSolnList flag, employed in .getModelValues()

@@ -1,6 +1,6 @@
 package parameter_estimation;
 
-import parameter_estimation.jing.mathtool.UncertainDouble;
+import jing.mathTool.UncertainDouble;
 
 
 /**

@@ -18,7 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import parameter_estimation.jing.mathtool.UncertainDouble;
+import jing.mathTool.UncertainDouble;
+import jing.param.GasConstant;
+import jing.param.Temperature;
+import jing.rxn.ArrheniusKinetics;
 
 
 /**
@@ -107,14 +110,21 @@ public class Tools {
 		}
 	}
 
-	public static List<ModifiedArrheniusKinetics> setListWithVector(Double [] vector, List<ModifiedArrheniusKinetics> kin){
+	public static List<ModifiedArrheniusKinetics> setListWithVector(Double [] vector, Optimization optim){
 		//convert 1D vector back to List<ConstrainedArrheniusKinetics> notation:
 		int counter = 0;
-		
-//		List<ModifiedArrheniusKinetics> clone = kin.clone();
-		
+		List<ModifiedArrheniusKinetics> kin = optim.getCoefficients();
+		/**
+		 * first the List kin is updated with the values from Double[] vector, regardless of
+		 * the fact whether re-parametrized A-values are used or not.
+		 */
 		for(ModifiedArrheniusKinetics c : kin){
 			if(!c.getA().isFixed()) {
+				//if(optim.isParametrized()){
+					//how do we get the optimized value of Ea???
+					//double A = vector[counter]*Math.exp(arg0);
+					//c.getA().setuDouble(new UncertainDouble(vector[counter],0, "Adder"));
+				//}
 				c.getA().setuDouble(new UncertainDouble(vector[counter],0, "Adder"));
 				counter++;
 			}
@@ -126,9 +136,27 @@ public class Tools {
 				c.getEa().setuDouble(new UncertainDouble(vector[counter],0, "Adder"));
 				counter++;	
 			}
-			
 		}
 
+		/**
+		 * if re-parametrization was used, the re-parametrized A-values need to be re-converted to
+		 * the genuine A-values:
+		 * A = k_avg * exp(Ea/(R * Tavg)) with k_avg stored in the A-container already.
+		 */
+		if(optim.isParametrized()){
+			for(ModifiedArrheniusKinetics c : kin){
+				if(!c.getA().isFixed()) {
+					//since Ea is in kJ/mol, it has to be multiplied by 1000 to get J/mol:
+					double Ea = c.getEa().getuDouble().getValue()*1000;
+					double R = GasConstant.getJMolK();
+					double Tavg = optim.getAvgTemp().getK();
+					double kavg = c.getA().getuDouble().getValue(); 
+					double A = kavg * Math.exp(Ea /(R * Tavg));
+					c.getA().setuDouble(new UncertainDouble(A,0, "Adder"));
+				}
+			}
+		}
+		
 		return kin;
 	}
 	/**
@@ -400,12 +428,27 @@ public class Tools {
 		}
 		return kin;
 	}
-
-	public static Double [] retrieveFittedParameters(List<ModifiedArrheniusKinetics> l ){
-
-		List<Double> a = new ArrayList();
-		for (ModifiedArrheniusKinetics m : l){
-			if(!m.getA().isFixed()) a.add((Double)m.getA().getuDouble().getValue());
+	/**
+	 * stores the parameters to be optimized in a Double Array.
+	 * It does so, by accessing the Coefficients
+	 * first, it checks where a given parameter is fixed or not
+	 * secondly, for pre-exponential factors, it checks whether the "parametrized" form
+	 * is used for optimization instead of the "raw" value, which is usually very high
+	 * e.g. 1E14 s-1 for certain types of unimolecular reactions 
+	 * @param optim
+	 * @return
+	 */
+	public static Double [] retrieveFittedParameters(Optimization optim){
+		
+		List<ModifiedArrheniusKinetics> l = optim.getCoefficients();
+		List<Double> a = new ArrayList<Double>();
+		for (ModifiedArrheniusKinetics m : l){			
+			if(!m.getA().isFixed()){
+				if(optim.isParametrized()){
+					a.add(parametrize(m,optim.getAvgTemp()));
+				}
+				else a.add((Double)m.getA().getuDouble().getValue());
+			}
 			if(!m.getN().isFixed()) a.add((Double)m.getN().getuDouble().getValue());
 			if(!m.getEa().isFixed()) a.add((Double)m.getEa().getuDouble().getValue());
 		}
@@ -415,7 +458,7 @@ public class Tools {
 	}
 
 	public static Double [] retrieveLowerBounds(List<ModifiedArrheniusKinetics> l ){
-		List<Double> a = new ArrayList();
+		List<Double> a = new ArrayList<Double>();
 		for (ModifiedArrheniusKinetics m : l){
 			if(!m.getA().isFixed()) a.add((Double)m.getA().getMin());
 			if(!m.getN().isFixed()) a.add((Double)m.getN().getMin());
@@ -426,7 +469,7 @@ public class Tools {
 	}
 	
 	public static Double [] retrieveUpperBounds(List<ModifiedArrheniusKinetics> l ){
-		List<Double> a = new ArrayList();
+		List<Double> a = new ArrayList<Double>();
 		for (ModifiedArrheniusKinetics m : l){
 			if(!m.getA().isFixed()) a.add((Double)m.getA().getMax());
 			if(!m.getN().isFixed()) a.add((Double)m.getN().getMax());
@@ -442,7 +485,7 @@ public class Tools {
 	 * return the chemistry input filename<BR>
 	 * WARNING: method supposes TD inside chemistry input file!!!<BR>
 	 */
-	public static void updateChemistryInput (Paths p, Double [] d, List<ModifiedArrheniusKinetics> l) throws IOException{
+	public static void writeChemistryInput (Paths p, List<ModifiedArrheniusKinetics> l) throws IOException{
 		BufferedReader in = new BufferedReader(new FileReader(p.getWorkingDir()+p.getChemInp()));
 		PrintWriter out = new PrintWriter(new FileWriter(p.getWorkingDir()+"temp.inp"));
 		String dummy = in.readLine();
@@ -465,33 +508,15 @@ public class Tools {
 		out.println(dummy);
 		
 		//add new parameter values from Double[], only if isFixed()==true, otherwise, use old values from List
-		int counter = 0;
 		for(ModifiedArrheniusKinetics m : l){
 			dummy = in.readLine();
 			String[] st_dummy = dummy.split("\\s");
-			//put new values of kinetic parameters (at position 1, 2, 3 of st_dummy[]):
-			if(m.getA().isFixed()){
-				st_dummy[1] = Double.toString(m.getA().getuDouble().getValue());
-			}
-			else {
-				st_dummy[1] = Double.toString(d[counter]);
-				counter++;
-			}
-			if(m.getN().isFixed()){
-				st_dummy[2] = Double.toString(m.getN().getuDouble().getValue());
-			}
-			else {
-				st_dummy[2] = Double.toString(d[counter]);
-				counter++;
-			}
-			if(m.getEa().isFixed()){
-				st_dummy[3] = Double.toString(m.getEa().getuDouble().getValue());
-			}
-			else {
-				st_dummy[3] = Double.toString(d[counter]);
-				counter++;
-			}
-
+			
+			//put values of kinetic parameters (at position 1, 2, 3 of st_dummy[]):
+			st_dummy[1] = Double.toString(m.getA().getuDouble().getValue());
+			st_dummy[2] = Double.toString(m.getN().getuDouble().getValue());
+			st_dummy[3] = Double.toString(m.getEa().getuDouble().getValue());
+			
 			//rebuild String by concatening, and write out:
 			dummy = st_dummy[0];
 			for (int j = 1; j < st_dummy.length; j++) {
@@ -518,4 +543,78 @@ public class Tools {
 		File f = new File(p.getWorkingDir()+"temp.inp");
 		f.renameTo(new File(p.getWorkingDir()+p.getChemInp()));
 	}
+	public static float calculateMachineEpsilonFloat() {
+		float machEps = 1.0f;
+
+		do {
+			machEps /= 2.0f;
+		}
+		while ((float)(1.0 + (machEps/2.0)) != 1.0);
+
+		return machEps;
+	}
+	/**
+	 * reads reactor input file, searches for temperature profile, calculates average
+	 * temperature along the profile
+	 * @return
+	 * @throws Exception 
+	 */
+	public static Temperature calcAvgTempPerExperiment (String workingDir, String filename) throws Exception{
+		//open file:
+		BufferedReader in = new BufferedReader(new FileReader(workingDir+filename));
+		/**
+		 * search for "TPRO" as first String in reactor input file line
+		 */
+		String line = in.readLine();
+		while(!line.split(" ")[0].equals("TPRO")){
+			line = in.readLine();
+		}
+		
+		/**
+		 * add all found temperatures to a dummy double; keep track of number of T points:
+		 */
+		double dummyTemp = 0.0;
+		int counter = 0;
+		while(line.split(" ")[0].equals("TPRO")){
+			counter++;
+			dummyTemp += Double.parseDouble(line.split(" ")[2]);
+			line = in.readLine();
+			
+		}
+		
+		in.close();
+		/**
+		 * return average by dividing sum by number of T points: 
+		 */
+		return new Temperature(dummyTemp / counter,"K");
+	}
+	/**
+	 * calculates average temperature:
+	 * @param workingDir
+	 * @param reactorInputs
+	 * @return
+	 * @throws Exception
+	 */
+	public static Temperature calcAvgTemp (String workingDir, String [] reactorInputs) throws Exception{
+		double dummy = 0.0;
+		for(String s : reactorInputs){
+			dummy += Tools.calcAvgTempPerExperiment(workingDir, s).getK();
+		}	
+		return new Temperature (dummy / reactorInputs.length, "K");
+	}
+	/**
+	 * convert pre-exponential factor A to reparametrized "average rate coefficient"
+	 * @return
+	 */
+	public static Double parametrize(ModifiedArrheniusKinetics m, Temperature avgTemp){
+		UncertainDouble A = m.getA().getuDouble();
+		UncertainDouble n = m.getN().getuDouble();
+		//ArrheniusKinetics uses R in kcal/mol/K, therefore, we need to change the units of Ea to kcal/mol:
+		double kJkCal = 0.239;
+		UncertainDouble Ea = new UncertainDouble(m.getEa().getuDouble().getValue()*kJkCal,0, "Adder");
+		ArrheniusKinetics arr = new ArrheniusKinetics(A,n,Ea,"Unknown",0,"Unknown","Unknown");
+		return arr.calculateRate(avgTemp);
+	}
+	
+	
 }

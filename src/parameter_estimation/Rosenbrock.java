@@ -50,22 +50,22 @@ public class Rosenbrock{
 	private Optimization optim;
 /**
  * constructor with standard values of EFRAC, SUCC, FAIL
- * @param o
+ * @param optim
  * @param maxeval
  */
-	public Rosenbrock(Optimization o, int maxeval){
-		this.optim = o;
+	public Rosenbrock(Optimization optim, int maxeval){
+		this.optim = optim;
 		this.maxeval = maxeval;
-		this.parms = new Double[Tools.retrieveFittedParameters(o.getCoefficients()).length];
+		this.parms = new Double[Tools.retrieveFittedParameters(optim).length];
 		//put parameter to be fitted in Double array:
-		System.arraycopy(Tools.retrieveFittedParameters(o.getCoefficients()), 0, parms, 0, parms.length);
+		System.arraycopy(Tools.retrieveFittedParameters(optim), 0, parms, 0, parms.length);
 	
-		lower = Tools.retrieveLowerBounds(o.getCoefficients());
-		upper = Tools.retrieveUpperBounds(o.getCoefficients());
+		lower = Tools.retrieveLowerBounds(optim.getCoefficients());
+		upper = Tools.retrieveUpperBounds(optim.getCoefficients());
 		
 		this.e = new double[parms.length];
 		for (int i = 0; i < e.length; i++) {
-				this.e[i] = Tools.retrieveFittedParameters(o.getCoefficients())[i] * EFRAC;	
+				this.e[i] = Tools.retrieveFittedParameters(optim)[i] * EFRAC;	
 		}
 	}
 	/**
@@ -121,7 +121,7 @@ public class Rosenbrock{
 		while (neval < maxeval) {			
 			for (int i = 0; i < parms.length; i++) {
 					System.out.println("Beta: ");
-					print(Tools.retrieveFittedParameters(optim.getCoefficients()));
+					print(Tools.retrieveFittedParameters(optim));
 					
 					//Parameters are slightly changed in the direction of basisvector 'i' to beta_new(j), j=1..np
 					for (int j = 0; j < parms.length; j++) {
@@ -171,7 +171,7 @@ public class Rosenbrock{
 				
 						//put successful parameter values of parms_trial in parms and in optimization.coefficients:
 						parms = parms_trial.clone();
-						optim.setCoefficients(Tools.setListWithVector(parms, optim.getCoefficients()));
+						optim.setCoefficients(Tools.setListWithVector(parms, optim));
 						
 						current = trial;
 						for (int j = 0; j < d.length; j++) {

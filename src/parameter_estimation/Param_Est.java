@@ -2,6 +2,8 @@ package parameter_estimation;
 import java.util.*;
 import java.io.*;
 
+import jing.param.Temperature;
+
 
 
 
@@ -61,8 +63,9 @@ public class Param_Est{
  * <LI>calling the actual optimization routine, i.e. the Rosenbrock algorithm</LI>
  * <LI>writing the optimized kinetic parameters to a params.txt file</LI>	
  * @throws Exception 
+ * @throws Exception 
  */
-	public void optimizeParameters() throws IOException, InterruptedException{
+	public void optimizeParameters() throws Exception{
 		long time = System.currentTimeMillis();
 		
 		//check if initial input file is error-free:
@@ -254,7 +257,7 @@ public class Param_Est{
 	public List<Map<String, Double>> getModel() {
 		return model;
 	}
-	public void statistics() throws IOException, InterruptedException{
+	public void statistics() throws Exception{
 		long time = System.currentTimeMillis();
 		
 		//check if initial input file is error-free:
@@ -286,5 +289,8 @@ public class Param_Est{
 		Tools.moveFiles(paths.getWorkingDir(), paths.getOutputDir(), ".asc");
 		Tools.moveFile(paths.getOutputDir(),"CKSolnList.txt");
 		
+	}
+	public Temperature getAvgTemp() throws Exception{
+		return Tools.calcAvgTemp(paths.getWorkingDir(),paths.getReactorInputs());
 	}
 }
