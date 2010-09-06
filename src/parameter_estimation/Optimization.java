@@ -51,7 +51,7 @@ public class Optimization{
 	boolean flagRosenbrock;
 	boolean flagLM;
 	boolean weightedRegression;
-	boolean parametrized = true;
+	boolean parametrized = false;
 	
 	public boolean isParametrized() {
 		return parametrized;

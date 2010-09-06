@@ -149,8 +149,11 @@ public class Rosenbrock{
 					out.println("Current evaluation no.: "+neval);
 					System.out.println("Evaluation no. "+neval);
 					
-					//do update of chemistry input with new parameter trials:
-					Tools.updateChemistryInput(optim.getPaths(), parms_trial, optim.getCoefficients());
+
+					// put new parameter trials in optim.coefficients:
+					optim.setCoefficients(Tools.setListWithVector(parms_trial, optim));
+					//write new chemistry input with new parameter trials:
+					Tools.writeChemistryInput(optim.getPaths(), optim.getCoefficients());
 					
 					//model predictions with new parameter guesses is called:
 					//set flag_CKSolnList to false to prevent calling the CKSolnList creator once again:
@@ -184,6 +187,9 @@ public class Rosenbrock{
 						}
 					}
 					else {
+						// put old parameters in optim.coefficients after they had be replaced by the parameter trials:
+						optim.setCoefficients(Tools.setListWithVector(parms, optim));
+						
 						out.println("Damn. trial SSQ > current SSQ...");
 						outSSQ.println(neval+","+trial);
 						e[i] *= FAIL;
