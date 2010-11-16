@@ -609,7 +609,9 @@ public class Tools {
 	public static Double parametrize(ModifiedArrheniusKinetics m, Temperature avgTemp){
 		UncertainDouble A = m.getA().getuDouble();
 		UncertainDouble n = m.getN().getuDouble();
-		//ArrheniusKinetics uses R in kcal/mol/K, therefore, we need to change the units of Ea to kcal/mol:
+		/**
+		 * <code>ArrheniusKinetics</code> uses R in kcal/mol/K, therefore, we need to change the units of Ea to kcal/mol:
+		 */
 		double kJkCal = 0.239;
 		UncertainDouble Ea = new UncertainDouble(m.getEa().getuDouble().getValue()*kJkCal,0, "Adder");
 		ArrheniusKinetics arr = new ArrheniusKinetics(A,n,Ea,"Unknown",0,"Unknown","Unknown");

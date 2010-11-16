@@ -51,8 +51,20 @@ public class Optimization{
 	boolean flagRosenbrock;
 	boolean flagLM;
 	boolean weightedRegression;
+	
+	/**
+	 * the <code>parametrized</code> flag determines whether reparametrized A-values are used or regular ones.
+	 * the advantage of reparametrization for jacobian-based optimization routines like Levenberg-Marquardt is the 
+	 * decrease in correlation between the A-value and the Ea value.
+	 */
 	boolean parametrized = false;
 	
+	/**
+	 * TODO
+	 * parametrization should only be applied to LM optimization and not to Rosenbrock or any other direct
+	 * optimization routines.
+	 * @return
+	 */
 	public boolean isParametrized() {
 		return parametrized;
 	}

@@ -20,6 +20,12 @@ public class ParameterEstimationDriver {
 	public static void main(String[] args) throws Exception {
 		long time = System.currentTimeMillis();
 
+		/**
+		 * initialize so no error messages are thrown due to redundant files/directories
+		 */
+		initialize();
+		
+		
 		//input file will be searched in working directory under the name INPUT.txt:
 		BufferedReader in = new BufferedReader(new FileReader(System.getProperty("user.dir")+"/INPUT.txt"));
 
@@ -469,6 +475,41 @@ public class ParameterEstimationDriver {
 	}
 	
 	
+	public static void initialize(){
+		/**
+		 * remove redundant files and/or folders from the working directory:
+		 */
+		
+		//stdout file
+		File stdout = new File ("stdout");
+		stdout.delete();
+		
+		//output directory
+		File output = new File("output");
+		Tools.deleteDir(output);
+		
+		//print NBMT Header:
+		printHeader();
+	}
 	
+	public static void printHeader(){
+		 // Print out header
+		System.out.println("");
+		System.out.println("######################################################################");
+		System.out.println("#                                                                    #");
+		System.out.println("#              NBMT - Nick's Black Magic Toolbox                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#  http://http://github.com/nickvandewiele/be.ugent.lct.nbmt.git.github/                        #");
+		System.out.println("#                                                                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#                                                                    #");
+		System.out.println("#  Copyright (c)      2010                                           #");
+		System.out.println("######################################################################");
+		System.out.println("");
 
+	}
 }
